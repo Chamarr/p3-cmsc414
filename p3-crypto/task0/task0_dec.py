@@ -40,10 +40,15 @@ for i in range(nrails, seq_length):
 
 # Now, let's iterate over the input.
 plaintext = ''
-rail_idxs = [0] * nrails
 for i in range(ciphertext_len):
+    if i == 0:
+        rail_idxs = [0] * nrails
     # TODO: finish up this loop
     curr_rail = rindex[i%seq_length]
+    # assert curr_rail < len(rail_idxs), print(f'curr_rail {curr_rail} and rail idx len is {rail_idxs}')
+    # assert curr_rail < len(rails), print(f'curr_rail {curr_rail} and rails is {rails}')
+    # assert rail_idxs[curr_rail] < len(rails[curr_rail]), f'rail idxs at curr rail {rail_idxs[curr_rail]} and rails[curr rail] is {len(rails[curr_rail])}'
+    # plaintext += rails[curr_rail][rail_idxs[curr_rail]] if rail_idxs[curr_rail] < len(rails[curr_rail]) else '?'
     plaintext += rails[curr_rail][rail_idxs[curr_rail]]
     rail_idxs[curr_rail] += 1
 
