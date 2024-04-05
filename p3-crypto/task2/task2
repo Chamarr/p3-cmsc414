@@ -1,0 +1,14 @@
+#!/usr/bin/env python
+
+#./task2 task2.in
+
+import sys
+import utils
+
+filename = sys.argv[1]
+
+messageValuesToTypes = utils.getMessageValuesToTypes(filename)
+
+result = utils.getMessageTypesFromSession(filename, messageValuesToTypes)
+
+print("\n".join(result))
