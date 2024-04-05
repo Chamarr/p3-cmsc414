@@ -1,0 +1,82 @@
+#!/usr/bin/env python
+
+#./task2 task2.in
+
+import sys
+import utils
+import collections
+import itertools
+
+filename = sys.argv[1]
+
+messageValuesToTypes = utils.getMessageValuesToTypes(filename)
+
+result = utils.getMessageTypesFromSession(filename, messageValuesToTypes)
+
+print("\n".join(result))
+
+try:
+    with open(filename, 'rb') as file:
+        insideMessage = False
+        currLineMessage = 1
+        currMessage = None
+        senderAccounts = collections.Counter()
+        receiverAccounts = collections.Counter()
+        nonTransferReferenceAccounts = set()
+        accountIDTransferLineNum = {}
+        currMessageStart = None
+        invoiceValue = None
+        for lineNum in itertools.count(start=1):
+            currBlock = file.read(16)
+            if not currBlock:
+                break
+            currBlockHex = currBlock.hex()
+            if insideMessage:
+                currLineMessage += 1
+
+                if currMessage == "TRANSFER":
+                    if currLineMessage == 2:
+                        senderAccounts[currBlockHex] += 1
+                    elif currLineMessage == 3:
+                        receiverAccounts[currBlockHex] += 1
+                        accountIDTransferLineNum[currBlockHex] = currMessageStart
+                elif currMessage == "BALANCE":
+                    if currLineMessage == 2:
+                        nonTransferReferenceAccounts.add(currBlockHex)
+                else:
+                    if currLineMessage == 2 or currLineMessage == 3:
+                        nonTransferReferenceAccounts.add(currBlockHex)
+                    elif currLineMessage == 4:
+                        invoiceValue = currBlock
+
+                if currLineMessage == utils.messageLength[currMessage]:
+                    insideMessage = False
+            else:
+                currMessage = messageValuesToTypes[currBlockHex]
+                currLineMessage = 1
+                currMessageStart = lineNum
+                insideMessage = True
+
+    for account, receptionCount in receiverAccounts.items():
+        if receptionCount == 1 and account not in senderAccounts and account not in nonTransferReferenceAccounts:
+            myAccount = account
+
+except FileNotFoundError:
+    print("file not found", file = sys.stderr)
+
+
+
+try:
+    with open(filename, 'rb') as originalFile, open("task4.out", 'wb') as newfile:
+        for lineNum in itertools.count(start=1):
+            currBlock = originalFile.read(16)
+            if not currBlock:
+                break
+            currBlockHex = currBlock.hex()
+            if lineNum == accountIDTransferLineNum[myAccount] + 3:
+                newfile.write(invoiceValue)
+            else:
+                newfile.write(currBlock)
+
+except FileNotFoundError:
+    print("file not found", file = sys.stderr)
