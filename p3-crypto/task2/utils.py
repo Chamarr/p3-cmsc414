@@ -96,5 +96,5 @@ def getMessageTypesFromSession(filename, messageValuesToTypes):
     return arr
 
 
-print("\nfinal answer:\n", file = sys.stderr)
+# print("\nfinal answer:\n", file = sys.stderr)
 
