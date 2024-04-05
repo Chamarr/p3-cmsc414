@@ -18,7 +18,7 @@ def getMessageValuesToTypes(filename):
     orderings = getOrderings(messageTypes)
     orderingsidx = 0
     while not success:
-        print("new iteration", file = sys.stderr)
+        # print("new iteration", file = sys.stderr)
         messageCounts = { 
             "BALANCE": 0,
             "TRANSFER": 0,
@@ -56,7 +56,7 @@ def getMessageValuesToTypes(filename):
                         insideMessage = True
                         currMessage = messageValuesToTypes[currBlockHex]
                         messageCounts[currMessage] += 1
-                        print(lineNum, currMessage, file = sys.stderr)
+                        # print(lineNum, currMessage, file = sys.stderr)
                     if currBlockHex not in messageTypeToValues.values() and not insideMessage:
                         currLineMessage = 1
                         if currOrderingidx >= len(currOrdering):
@@ -67,7 +67,7 @@ def getMessageValuesToTypes(filename):
                         messageValuesToTypes[currBlockHex] = currMessage
                         messageTypeToValues[currMessage] = currBlockHex
                         messageCounts[currMessage] += 1
-                        print(lineNum, currMessage, file = sys.stderr)
+                        # print(lineNum, currMessage, file = sys.stderr)
                     if currBlockHex not in messageTypeToValues.values() and insideMessage:
                         currLineMessage += 1
                         if currLineMessage == messageLength[currMessage]:
