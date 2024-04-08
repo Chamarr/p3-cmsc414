@@ -1,0 +1,107 @@
+#!/usr/bin/env python
+
+#./task2 task2.in
+
+import sys
+import utils
+import collections
+import itertools
+
+filename = sys.argv[1]
+
+messageValuesToTypes = utils.getMessageValuesToTypes(filename)
+
+messageTypesToValues = {type:val for val,type in messageValuesToTypes.items()}
+
+result = utils.getMessageTypesFromSession(filename, messageValuesToTypes)
+
+print("\n".join(result))
+
+try:
+    with open(filename, 'rb') as file:
+        insideMessage = False
+        currLineMessage = 1
+        currMessage = None
+        senderAccounts = collections.Counter()
+        receiverAccounts = collections.Counter()
+        nonTransferReferenceAccounts = set()
+        accountIDInvoiceRequestLineNum = {}
+        currMessageStart = None
+        invoiceValue = None
+        invoiceRequestedAccounts = set()
+        nonInvoiceRequestReferenceAccounts = set()
+        invoicePayerToRequestor = {}
+        invoicePayerToValue = {}
+        currInvoiceRequestor = None
+        currInvoicePayer = None
+        for lineNum in itertools.count(start=1):
+            currBlock = file.read(16)
+            if not currBlock:
+                break
+            currBlockHex = currBlock.hex()
+            if insideMessage:
+                currLineMessage += 1
+
+                if currMessage == "TRANSFER":
+                    if currLineMessage == 2:
+                        nonInvoiceRequestReferenceAccounts.add(currBlock)
+                    elif currLineMessage == 3:
+                        nonInvoiceRequestReferenceAccounts.add(currBlock)
+                    elif currLineMessage == 5:
+                        timeLineValue = currBlock
+                elif currMessage == "BALANCE":
+                    if currLineMessage == 2:
+                        nonInvoiceRequestReferenceAccounts.add(currBlock)
+                else:
+                    if currLineMessage == 2:
+                        nonInvoiceRequestReferenceAccounts.add(currBlock)
+                        currInvoiceRequestor = currBlock
+                    elif currLineMessage == 3:
+                        invoiceRequestedAccounts.add(currBlock)
+                        accountIDInvoiceRequestLineNum[currBlock] = currMessageStart
+                        invoicePayerToRequestor[currBlock] = currInvoiceRequestor
+                        currInvoicePayer = currBlock
+                    elif currLineMessage == 4:
+                        invoicePayerToValue[currInvoicePayer] = currBlock
+
+                if currLineMessage == utils.messageLength[currMessage]:
+                    insideMessage = False
+            else:
+                currMessage = messageValuesToTypes[currBlockHex]
+                currLineMessage = 1
+                currMessageStart = lineNum
+                insideMessage = True
+                currInvoiceRequestor = None
+                currInvoicePayer = None
+
+    myAccount = invoiceRequestedAccounts - nonInvoiceRequestReferenceAccounts
+    myAccount = myAccount.pop()
+
+except FileNotFoundError:
+    print("file not found", file = sys.stderr)
+
+try:
+    with open(filename, 'rb') as originalFile, open("task5.out", 'wb') as newfile:
+        for lineNum in itertools.count(start=1):
+            currBlock = originalFile.read(16)
+            if not currBlock:
+                break
+            if lineNum == accountIDInvoiceRequestLineNum[myAccount]:
+                # 1. write transfer header
+                transferBytes = bytes.fromhex(messageTypesToValues["TRANSFER"])
+                newfile.write(transferBytes)
+                # 2. from account
+                newfile.write(invoicePayerToRequestor[myAccount])
+                # 3. to account
+                newfile.write(myAccount)
+                # 4. amount
+                newfile.write(invoicePayerToValue[myAccount])
+                # 5. time frame
+                newfile.write(timeLineValue)
+                # TODO Handle money transfer
+                _ = originalFile.read(16 * 3) #skip over rest of invoice
+            else:
+                newfile.write(currBlock)
+
+except FileNotFoundError:
+    print("file not found", file = sys.stderr)
